@@ -5,18 +5,18 @@ This script initializes the Flask application for Azure App Service deployment.
 It handles production configuration, environment variables, and proper WSGI setup.
 """
 
-from app import app
 import os
+import sys
 
-# Configure for production
+# Get port from environment variable (Azure sets this)
+port = int(os.environ.get('PORT', 8000))
+
+# For Azure App Service, use gunicorn
 if __name__ == "__main__":
-    # Get port from environment variable (Azure sets this)
-    port = int(os.environ.get('PORT', 8000))
-    
-    # Run with production settings
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=False,  # Disable debug in production
-        threaded=True  # Enable threading for better performance
-    )
+    # Development mode
+    from app import app
+    app.run(host='0.0.0.0', port=port, debug=False)
+else:
+    # Production mode (when called by gunicorn)
+    from app import app
+    application = app
