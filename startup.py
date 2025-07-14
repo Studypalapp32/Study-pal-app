@@ -19,4 +19,4 @@ if __name__ == "__main__":
         port=port,
         debug=False,  # Disable debug in production
         threaded=True  # Enable threading for better performance
-    ) 
+    )
