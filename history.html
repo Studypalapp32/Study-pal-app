@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz History - Study Pal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistics Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Performance Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if statistics.total_attempts > 0 %}
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <h3 class="text-primary mb-1">{{ statistics.total_attempts }}</h3>
+                                <small class="text-muted">Total Attempts</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-box">
+                                <h3 class="text-success mb-1">{{ statistics.best_score }}%</h3>
+                                <small class="text-muted">Best Score</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mb-3">
+                        <div class="stat-box">
+                            <h4 class="text-info mb-1">{{ statistics.average_score }}%</h4>
+                            <small class="text-muted">Average Score</small>
+                        </div>
+                    </div>
+                    
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar {% if statistics.average_score >= 80 %}bg-success{% elif statistics.average_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             style="width: {{ statistics.average_score }}%">
+                            {{ statistics.average_score }}%
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <span class="badge {% if statistics.improvement_trend == 'Improving' %}bg-success{% elif statistics.improvement_trend == 'Declining' %}bg-danger{% else %}bg-secondary{% endif %} fs-6">
+                            {% if statistics.improvement_trend == 'Improving' %}
+                                <i class="bi bi-trending-up me-1"></i>
+                            {% elif statistics.improvement_trend == 'Declining' %}
+                                <i class="bi bi-trending-down me-1"></i>
+                            {% else %}
+                                <i class="bi bi-dash-circle me-1"></i>
+                            {% endif %}
+                            {{ statistics.improvement_trend }}
+                        </span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('home') }}" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-2"></i>
+                            Take New Quiz
+                        </a>
+                        {% if history %}
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearHistoryModal">
+                            <i class="bi bi-trash me-2"></i>
+                            Clear History
+                        </button>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-clipboard-x text-muted fs-1 mb-3"></i>
+                        <h5 class="text-muted">No Quiz History</h5>
+                        <p class="text-muted mb-3">Take your first quiz to see statistics here!</p>
+                        <a href="{{ url_for('home') }}" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-2"></i>
+                            Start Your First Quiz
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- History List -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Quiz History
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if history %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Quiz</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Grade</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quiz in history %}
+                                <tr class="quiz-row" data-quiz-id="{{ quiz.id }}">
+                                    <td>
+                                        <strong>{{ quiz.quiz_title }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ quiz.timestamp[:10] }} at {{ quiz.timestamp[11:16] }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ quiz.score }}/{{ quiz.total_questions }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress me-2" style="width: 50px; height: 8px;">
+                                                <div class="progress-bar {% if quiz.percentage >= 80 %}bg-success{% elif quiz.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                     style="width: {{ quiz.percentage }}%"></div>
+                                            </div>
+                                            <small class="fw-bold">{{ quiz.percentage }}%</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if quiz.percentage >= 90 %}
+                                            <span class="badge bg-success">A+</span>
+                                        {% elif quiz.percentage >= 80 %}
+                                            <span class="badge bg-success">A</span>
+                                        {% elif quiz.percentage >= 70 %}
+                                            <span class="badge bg-info">B</span>
+                                        {% elif quiz.percentage >= 60 %}
+                                            <span class="badge bg-warning">C</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">F</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('view_quiz_result', quiz_id=quiz.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-1"></i>
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-clipboard-x text-muted fs-1 mb-3"></i>
+                        <h5 class="text-muted">No Quiz History Available</h5>
+                        <p class="text-muted mb-3">Your completed quizzes will appear here</p>
+                        <a href="{{ url_for('home') }}" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-2"></i>
+                            Take Your First Quiz
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if history and statistics.recent_performance %}
+        <!-- Recent Performance Chart -->
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Recent Performance Trend
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="performance-chart">
+                    {% for quiz in statistics.recent_performance %}
+                    <div class="performance-bar">
+                        <div class="performance-fill {% if quiz.percentage >= 80 %}bg-success{% elif quiz.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             style="height: {{ quiz.percentage }}%"
+                             title="{{ quiz.quiz_title }}: {{ quiz.percentage }}%">
+                        </div>
+                        <small class="performance-label">Quiz {{ quiz.id }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Clear History Modal -->
+{% if history %}
+<div class="modal fade" id="clearHistoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Clear Quiz History
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear all quiz history? This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This will permanently delete all your quiz results and statistics.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Cancel
+                </button>
+                <a href="{{ url_for('clear_history') }}" class="btn btn-danger">
+                    <i class="bi bi-trash me-2"></i>
+                    Clear History
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add hover effects for quiz rows
+    document.querySelectorAll('.quiz-row').forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(120, 194, 173, 0.1)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    // Auto-refresh statistics every 30 seconds if on history page
+    setTimeout(() => {
+        location.reload();
+    }, 300000); // 5 minutes
+</script>
+
+<style>
+    .stat-box {
+        padding: 0.5rem;
+    }
+    
+    .performance-chart {
+        display: flex;
+        align-items: end;
+        height: 100px;
+        gap: 10px;
+        padding: 10px 0;
+    }
+    
+    .performance-bar {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+    }
+    
+    .performance-fill {
+        width: 20px;
+        min-height: 5px;
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .performance-fill:hover {
+        transform: scaleY(1.1);
+        opacity: 0.8;
+    }
+    
+    .performance-label {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+    
+    .quiz-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    @media (max-width: 768px) {
+        .performance-chart {
+            height: 80px;
+        }
+        
+        .performance-fill {
+            width: 15px;
+        }
+    }
+</style>
+{% endblock %} 
